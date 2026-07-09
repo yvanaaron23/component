@@ -3,7 +3,12 @@
   "displayName": "Component Generator",
   "description": "Generate a component (main file, style, test) for React, Vue, Svelte, or Angular — auto-detected from the project's package.json, matching whatever conventions and style library are already in use.",
   "version": "0.0.1",
-  "publisher": "local-dev",
+  "publisher": "Archimiste",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yvanaaron23/component.git"
+  },
   "engines": {
     "vscode": "^1.125.0",
     "node": ">=18"
