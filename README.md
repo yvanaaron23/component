@@ -8,9 +8,13 @@ Generate a component — main file, style, test — for **React, Vue, Svelte, or
 - Or Command Palette (`Ctrl+Shift+P`) → **Component Generator: Generate Component**
 - Pick a component type (Blank, Button, Modal, Form, List), enter a name (any casing is converted to PascalCase)
 
+### Generate in place, from an open file
+
+Right-click inside a file you already have open (no folder needs to be clicked) → **Generate Component**. Instead of scaffolding a new subfolder, it fills that file in place — the component name comes from the file's own name (e.g. `Sidebar.tsx` → component `Sidebar`) — and writes any style/test files as siblings next to it.
+
 ### Generate from a selection
 
-Select some JSX/markup (e.g. `<div>{title}</div>`) or a JSON sample (e.g. an API response) in the editor, right-click → **Generate Component from Selection**. The selected identifiers/keys become the generated component's props, with their types inferred where possible.
+Select some JSX/markup (e.g. `<div>{title}</div>`) or a JSON sample (e.g. an API response) in the editor, right-click → **Generate Component from Selection**. The selected identifiers/keys become the generated component's props, with their types inferred where possible. Unlike in-place generation, this always creates a new component folder (it's extracting a component out of existing markup, not filling the current file).
 
 ## How stack detection works
 

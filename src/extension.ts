@@ -292,6 +292,95 @@ async function generateComponent({ clickedUri, forcedComponentType, injectedProp
   );
 }
 
+async function writeSiblingIfAbsent(dirUri: vscode.Uri, file: { fileName: string; content: string }): Promise<void> {
+  const uri = vscode.Uri.joinPath(dirUri, file.fileName);
+  if (await folderExists(uri)) {
+    return; // don't clobber a file that's already there
+  }
+  await vscode.workspace.fs.writeFile(uri, Buffer.from(file.content, 'utf8'));
+}
+
+// Invoked from the editor context menu with no folder clicked: fills the file the
+// user already has open, instead of scaffolding a new ComponentName/ subfolder.
+// The component name comes from the open file's own name.
+async function generateInPlace(editor: vscode.TextEditor): Promise<void> {
+  const fileUri = editor.document.uri;
+  const dirUri = vscode.Uri.joinPath(fileUri, '..');
+
+  const deps = await readNearestPackageJsonDeps(dirUri);
+  const stack = await resolveStack(dirUri, deps);
+  if (!stack) {
+    return;
+  }
+
+  const componentType = await resolveComponentType();
+  if (!componentType) {
+    return;
+  }
+
+  let fields: FieldSpec[] = [];
+  if (componentType === 'form' || componentType === 'list') {
+    const collected = await collectFields(componentType, componentTypeLabels[componentType]);
+    if (collected === undefined) {
+      return;
+    }
+    fields = collected;
+  }
+
+  const baseName = fileUri.path.split('/').pop() ?? '';
+  const nameWithoutExt = baseName.replace(/\.[^./]+$/, '');
+  const componentName = toPascalCase(nameWithoutExt);
+  if (!componentName) {
+    vscode.window.showErrorMessage('Could not derive a component name from the current file name.');
+    return;
+  }
+
+  const baseOptions = readBaseOptions();
+  const conventions = detectConventions(await scanSiblingComponents(dirUri));
+
+  const options: GeneratorOptions = {
+    ...baseOptions,
+    fileNaming: conventions.fileNaming ?? baseOptions.fileNaming,
+    exportStyle: conventions.exportStyle ?? baseOptions.exportStyle,
+    styleFormat: conventions.styleFormat ?? baseOptions.styleFormat,
+    testFramework: conventions.testFramework ?? baseOptions.testFramework,
+    styleLib: resolveStyleLib(deps),
+    componentType,
+    props: [],
+    fields,
+  };
+
+  const template = templates[stack];
+  const mainFile = template.mainFile(componentName, options);
+
+  const lastLine = editor.document.lineAt(editor.document.lineCount - 1);
+  const fullRange = new vscode.Range(0, 0, lastLine.lineNumber, lastLine.text.length);
+  await editor.edit((editBuilder) => {
+    editBuilder.replace(fullRange, mainFile.content);
+  });
+
+  const markupFile = template.markupFile?.(componentName, options);
+  if (markupFile) {
+    await writeSiblingIfAbsent(dirUri, markupFile);
+  }
+
+  const styleFile = template.styleFile(componentName, options);
+  if (styleFile) {
+    await writeSiblingIfAbsent(dirUri, styleFile);
+  }
+
+  const testFile = template.testFile(componentName, options);
+  if (testFile) {
+    await writeSiblingIfAbsent(dirUri, testFile);
+  }
+
+  await updateBarrelFile(dirUri, stack, componentName, options);
+
+  vscode.window.showInformationMessage(
+    `Filled in ${stackLabels[stack]} ${componentTypeLabels[componentType].split(' ')[0].toLowerCase()} component "${componentName}".`,
+  );
+}
+
 async function generateComponentFromSelection(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.selection.isEmpty) {
@@ -309,9 +398,17 @@ async function generateComponentFromSelection(): Promise<void> {
   await generateComponent({ forcedComponentType: 'blank', injectedProps: props });
 }
 
+async function handleGenerateCommand(uri?: vscode.Uri): Promise<void> {
+  if (!uri && vscode.window.activeTextEditor?.document.uri.scheme === 'file') {
+    await generateInPlace(vscode.window.activeTextEditor);
+    return;
+  }
+  await generateComponent({ clickedUri: uri });
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand('component.generate', (uri?: vscode.Uri) => generateComponent({ clickedUri: uri })),
+    vscode.commands.registerCommand('component.generate', (uri?: vscode.Uri) => handleGenerateCommand(uri)),
     vscode.commands.registerCommand('component.generateFromSelection', () => generateComponentFromSelection()),
   );
 }

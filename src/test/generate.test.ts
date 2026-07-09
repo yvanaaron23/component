@@ -316,30 +316,30 @@ suite('component.generate integration', () => {
     assert.match(barrelContent, /export \{ default as NewOne \} from '\.\/NewOne\/NewOne';/);
   });
 
-  test('uses the active editor\'s folder as the target when invoked without a clicked folder', async () => {
-    const projectDir = makeProject(tmpRoot, 'active-editor-project', { react: '^18.0.0' });
+  test('fills the active editor in place when invoked without a clicked folder', async () => {
+    const projectDir = makeProject(tmpRoot, 'in-place-project', { react: '^18.0.0' });
     const subDir = path.join(projectDir, 'src', 'components');
     fs.mkdirSync(subDir, { recursive: true });
-    const openFilePath = path.join(subDir, 'Notes.txt');
-    fs.writeFileSync(openFilePath, 'just some file being edited\n');
+    const openFilePath = path.join(subDir, 'Sidebar.tsx');
+    fs.writeFileSync(openFilePath, '');
 
     const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(openFilePath));
-    await vscode.window.showTextDocument(doc);
+    const editor = await vscode.window.showTextDocument(doc);
 
-    // Deliberately no showOpenDialog stub: if the command fell back to the dialog
-    // instead of using the active editor's folder, showOpenDialog would be called
-    // and (being unstubbed here) would hang/fail rather than silently succeed.
+    // No showInputBox stub at all: the component name comes from the open file's
+    // own name, not a prompt. If the command asked for a name, the (unstubbed)
+    // showInputBox call would hang/fail rather than silently succeed.
     await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank'), async () => {
-      await withStub(vscode.window, 'showInputBox', async () => 'sidebar', async () => {
-        await vscode.commands.executeCommand('component.generate');
-      });
+      await vscode.commands.executeCommand('component.generate');
     });
 
-    const componentDir = path.join(subDir, 'Sidebar');
+    assert.ok(!fs.existsSync(path.join(subDir, 'Sidebar')), 'no new subfolder should have been created');
+    assert.match(editor.document.getText(), /function Sidebar\(/, 'the open file itself should contain the component');
     assert.ok(
-      fs.existsSync(path.join(componentDir, 'index.tsx')),
-      'component should have been generated next to the active file, in src/components',
+      fs.existsSync(path.join(subDir, 'Sidebar.module.css')),
+      'the style file should be written next to the open file, not in a subfolder',
     );
+    assert.ok(fs.existsSync(path.join(subDir, 'Sidebar.test.tsx')), 'the test file should be written alongside it too');
   });
 
   test('generates from an editor selection with inferred props', async () => {
