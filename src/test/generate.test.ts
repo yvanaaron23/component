@@ -373,6 +373,26 @@ suite('component.generate integration', () => {
     );
   });
 
+  test('treats a uri argument pointing at a file (not a folder) as an editor invocation', async () => {
+    // VS Code's editor context menu passes the active file's own resource as the
+    // command argument — it isn't exclusive to the Explorer's folder context menu.
+    // A file uri must not be trusted as a target folder (regression test).
+    const projectDir = makeProject(tmpRoot, 'file-uri-argument-project', { react: '^18.0.0' });
+    const subDir = path.join(projectDir, 'src', 'components');
+    fs.mkdirSync(subDir, { recursive: true });
+    const openFilePath = path.join(subDir, 'Sidebar.tsx');
+    fs.writeFileSync(openFilePath, '');
+
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(openFilePath));
+    const editor = await vscode.window.showTextDocument(doc);
+
+    await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank', 'in-place'), async () => {
+      await vscode.commands.executeCommand('component.generate', doc.uri);
+    });
+
+    assert.match(editor.document.getText(), /function Sidebar\(/, 'should have filled the open file, not crashed trying to scan it as a folder');
+  });
+
   test('generates from an editor selection with inferred props', async () => {
     const projectDir = makeProject(tmpRoot, 'selection-project', { react: '^18.0.0' });
     const targetUri = vscode.Uri.file(projectDir);

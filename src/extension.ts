@@ -398,8 +398,20 @@ async function generateComponentFromSelection(): Promise<void> {
   await generateComponent({ forcedComponentType: 'blank', injectedProps: props });
 }
 
+async function isDirectory(uri: vscode.Uri): Promise<boolean> {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri);
+    return (stat.type & vscode.FileType.Directory) !== 0;
+  } catch {
+    return false;
+  }
+}
+
 async function handleGenerateCommand(uri?: vscode.Uri): Promise<void> {
-  if (uri) {
+  // The editor context menu also passes a uri (the active file's own resource),
+  // not just the Explorer's folder context menu — only trust it as a target
+  // folder when it actually is one, otherwise fall through to the editor flow.
+  if (uri && (await isDirectory(uri))) {
     await generateComponent({ clickedUri: uri });
     return;
   }
