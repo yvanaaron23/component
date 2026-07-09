@@ -1,0 +1,184 @@
+{
+  "name": "component",
+  "displayName": "Component Generator",
+  "description": "Generate a component (main file, style, test) for React, Vue, Svelte, or Angular — auto-detected from the project's package.json, matching whatever conventions and style library are already in use.",
+  "version": "0.0.1",
+  "publisher": "local-dev",
+  "engines": {
+    "vscode": "^1.125.0",
+    "node": ">=18"
+  },
+  "categories": [
+    "Snippets",
+    "Other"
+  ],
+  "keywords": [
+    "react",
+    "vue",
+    "svelte",
+    "angular",
+    "component",
+    "generator",
+    "scaffold",
+    "boilerplate"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "bin": {
+    "generate-component": "./out/cli.js"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "component.generate",
+        "title": "Generate Component",
+        "category": "Component Generator"
+      },
+      {
+        "command": "component.generateFromSelection",
+        "title": "Generate Component from Selection",
+        "category": "Component Generator"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "component.generate",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "component.generateFromSelection",
+          "when": "editorHasSelection",
+          "group": "navigation@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Component Generator",
+      "properties": {
+        "componentGenerator.stack": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "react",
+            "vue",
+            "svelte",
+            "angular"
+          ],
+          "enumDescriptions": [
+            "Detect the stack from the nearest package.json (falls back to a manual prompt)",
+            "Always generate React components",
+            "Always generate Vue components",
+            "Always generate Svelte components",
+            "Always generate Angular components"
+          ],
+          "default": "auto",
+          "description": "Which stack to generate components for."
+        },
+        "componentGenerator.styleLib": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "plain",
+            "tailwind",
+            "styled-components",
+            "emotion",
+            "chakra-ui",
+            "mui"
+          ],
+          "enumDescriptions": [
+            "Detect from the nearest package.json's dependencies",
+            "Plain CSS/SCSS file (React) or embedded <style> block (Vue/Svelte)",
+            "Tailwind utility classes, no separate stylesheet",
+            "styled-components (React only)",
+            "Emotion (React only)",
+            "Chakra UI primitives (React only)",
+            "MUI primitives (React only)"
+          ],
+          "default": "auto",
+          "description": "Which styling approach to generate. Vue, Svelte, and Angular only distinguish plain vs Tailwind; the React-specific libraries fall back to plain CSS for them."
+        },
+        "componentGenerator.styleFormat": {
+          "type": "string",
+          "enum": [
+            "css-module",
+            "scss-module",
+            "css",
+            "scss",
+            "none"
+          ],
+          "enumDescriptions": [
+            "React: CSS module file imported as styles. Vue/Svelte: plain <style> block. Angular: plain .css file.",
+            "React: SCSS module file imported as styles. Vue/Svelte: <style lang=\"scss\"> block. Angular: plain .scss file.",
+            "React: plain .css file, side-effect import. Vue/Svelte: plain <style> block. Angular: plain .css file.",
+            "React: plain .scss file, side-effect import. Vue/Svelte: <style lang=\"scss\"> block. Angular: plain .scss file.",
+            "No stylesheet generated"
+          ],
+          "default": "css-module",
+          "description": "Stylesheet format. React generates a separate file; Vue and Svelte always embed styles in the component's <style> block; Angular always generates a separate (non-module) file. This setting mainly picks CSS vs SCSS outside of React."
+        },
+        "componentGenerator.generateTest": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate a test file alongside the component."
+        },
+        "componentGenerator.testFramework": {
+          "type": "string",
+          "enum": [
+            "jest",
+            "vitest"
+          ],
+          "default": "jest",
+          "description": "Testing library APIs to import in the generated test file."
+        },
+        "componentGenerator.fileNaming": {
+          "type": "string",
+          "enum": [
+            "index",
+            "componentName"
+          ],
+          "enumDescriptions": [
+            "ComponentName/index.<ext>",
+            "ComponentName/ComponentName.<ext>"
+          ],
+          "default": "index",
+          "description": "Naming convention for the main component file inside the generated folder. Angular ignores this and always uses its kebab-case *.component.ts convention."
+        },
+        "componentGenerator.exportStyle": {
+          "type": "string",
+          "enum": [
+            "named",
+            "default"
+          ],
+          "default": "named",
+          "description": "React only: whether the generated component uses a named export or a default export. Vue and Svelte components are always the file's default export; Angular components are always a named class export."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.125.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "24.x",
+    "typescript-eslint": "^8.61.1",
+    "eslint": "^10.5.0",
+    "typescript": "^6.0.3",
+    "@vscode/test-cli": "^0.0.15",
+    "@vscode/test-electron": "^3.0.0"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "serialize-javascript": "^7.0.6"
+  }
+}
