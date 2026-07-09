@@ -27,12 +27,15 @@ function makeProject(tmpRoot: string, name: string, deps: Record<string, string>
   return dir;
 }
 
-// The extension shows a QuickPick both for the stack (only when it can't be
-// auto-detected) and for the component type (always). Route each call to the
-// right fixture item based on its placeHolder text.
-function stackAndTypeStub(preferredStack: string, preferredType: string) {
+// The extension shows a QuickPick for: how to generate (only when invoked from the
+// editor with no folder clicked), the stack (only when it can't be auto-detected),
+// and the component type (always). Route each call by its placeHolder text.
+function stackAndTypeStub(preferredStack: string, preferredType: string, preferredMode?: 'in-place' | 'new-folder') {
   return async (items: unknown, options?: { placeHolder?: string }) => {
     const resolvedItems = (Array.isArray(items) ? items : await items) as Array<Record<string, string>>;
+    if (options?.placeHolder?.includes('want to generate')) {
+      return resolvedItems.find((item) => item.mode === preferredMode) ?? resolvedItems[0];
+    }
     if (options?.placeHolder?.includes('kind of component')) {
       return resolvedItems.find((item) => item.type === preferredType) ?? resolvedItems[0];
     }
@@ -329,7 +332,7 @@ suite('component.generate integration', () => {
     // No showInputBox stub at all: the component name comes from the open file's
     // own name, not a prompt. If the command asked for a name, the (unstubbed)
     // showInputBox call would hang/fail rather than silently succeed.
-    await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank'), async () => {
+    await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank', 'in-place'), async () => {
       await vscode.commands.executeCommand('component.generate');
     });
 
@@ -340,6 +343,34 @@ suite('component.generate integration', () => {
       'the style file should be written next to the open file, not in a subfolder',
     );
     assert.ok(fs.existsSync(path.join(subDir, 'Sidebar.test.tsx')), 'the test file should be written alongside it too');
+  });
+
+  test('creates a new component folder next to the open file when that mode is picked', async () => {
+    const projectDir = makeProject(tmpRoot, 'new-folder-from-editor-project', { react: '^18.0.0' });
+    const subDir = path.join(projectDir, 'src', 'components');
+    fs.mkdirSync(subDir, { recursive: true });
+    const openFilePath = path.join(subDir, 'Sidebar.tsx');
+    fs.writeFileSync(openFilePath, 'export {};\n');
+
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(openFilePath));
+    await vscode.window.showTextDocument(doc);
+
+    await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank', 'new-folder'), async () => {
+      await withStub(vscode.window, 'showInputBox', async () => 'widget', async () => {
+        await vscode.commands.executeCommand('component.generate');
+      });
+    });
+
+    assert.match(
+      doc.getText(),
+      /^export \{\};$/m,
+      'the open file itself should be untouched',
+    );
+    const componentDir = path.join(subDir, 'Widget');
+    assert.ok(
+      fs.existsSync(path.join(componentDir, 'index.tsx')),
+      'a new component folder should have been created next to the open file',
+    );
   });
 
   test('generates from an editor selection with inferred props', async () => {

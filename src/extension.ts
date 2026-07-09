@@ -399,11 +399,43 @@ async function generateComponentFromSelection(): Promise<void> {
 }
 
 async function handleGenerateCommand(uri?: vscode.Uri): Promise<void> {
-  if (!uri && vscode.window.activeTextEditor?.document.uri.scheme === 'file') {
-    await generateInPlace(vscode.window.activeTextEditor);
+  if (uri) {
+    await generateComponent({ clickedUri: uri });
     return;
   }
-  await generateComponent({ clickedUri: uri });
+
+  const activeEditor = vscode.window.activeTextEditor;
+  if (!activeEditor || activeEditor.document.uri.scheme !== 'file') {
+    await generateComponent({});
+    return;
+  }
+
+  // Invoked from the editor with no folder clicked: the user could mean either
+  // "fill the file I have open" or "scaffold a new component folder here" — ask.
+  const modePick = await vscode.window.showQuickPick(
+    [
+      {
+        label: 'Fill this file',
+        description: 'Generate the component directly into the file you have open',
+        mode: 'in-place' as const,
+      },
+      {
+        label: 'Create a new component folder here',
+        description: 'Scaffold a new ComponentName/ folder next to this file',
+        mode: 'new-folder' as const,
+      },
+    ],
+    { placeHolder: 'How do you want to generate this component?' },
+  );
+  if (!modePick) {
+    return;
+  }
+
+  if (modePick.mode === 'in-place') {
+    await generateInPlace(activeEditor);
+  } else {
+    await generateComponent({ clickedUri: vscode.Uri.joinPath(activeEditor.document.uri, '..') });
+  }
 }
 
 export function activate(context: vscode.ExtensionContext): void {

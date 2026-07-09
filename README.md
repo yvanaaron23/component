@@ -8,9 +8,9 @@ Generate a component — main file, style, test — for **React, Vue, Svelte, or
 - Or Command Palette (`Ctrl+Shift+P`) → **Component Generator: Generate Component**
 - Pick a component type (Blank, Button, Modal, Form, List), enter a name (any casing is converted to PascalCase)
 
-### Generate in place, from an open file
+### Generate from an open file, in the code
 
-Right-click inside a file you already have open (no folder needs to be clicked) → **Generate Component**. Instead of scaffolding a new subfolder, it fills that file in place — the component name comes from the file's own name (e.g. `Sidebar.tsx` → component `Sidebar`) — and writes any style/test files as siblings next to it.
+Right-click inside a file you already have open (no folder needs to be clicked) → **Generate Component**. You're asked how: **Fill this file** (fills the open file in place, component name taken from the file's own name, e.g. `Sidebar.tsx` → `Sidebar`, style/test files written as siblings) or **Create a new component folder here** (scaffolds a new `ComponentName/` folder next to that file, same as the Explorer flow, just without needing to go click a folder first).
 
 ### Generate from a selection
 
