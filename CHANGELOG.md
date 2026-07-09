@@ -6,6 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-07-09
+
 - Initial release
 - Multi-stack support: React, Vue, Svelte, Angular, auto-detected from `package.json`
 - Style library detection (Tailwind, styled-components, Emotion, Chakra UI, MUI)
@@ -16,3 +18,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Standalone CLI (`npx generate-component`) reusing the same generation core
 - Custom fields for Form/List via an interactive field table (VS Code) or `--fields=name:kind,...` (CLI), falling back to the previous single-email/`string[]` defaults when none are added
 - Generate Component is now also available from the editor context menu (not just the Explorer): choose to fill the currently open file in place (name taken from the file itself) or scaffold a new component folder next to it
+- Fixed a crash when the editor context menu passed the active file's own uri (was mistaken for a clicked target folder)
