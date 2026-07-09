@@ -1,4 +1,4 @@
-# Component Generator
+# Archemist Component Generator
 
 Generate a component — main file, style, test — for **React, Vue, Svelte, or Angular**, matching whatever stack, style library, and conventions your project already uses.
 

@@ -1,6 +1,6 @@
 {
   "name": "component",
-  "displayName": "Component Generator",
+  "displayName": "Archemist Component Generator",
   "description": "Generate a component (main file, style, test) for React, Vue, Svelte, or Angular — auto-detected from the project's package.json, matching whatever conventions and style library are already in use.",
   "version": "0.0.1",
   "publisher": "Archemist",
