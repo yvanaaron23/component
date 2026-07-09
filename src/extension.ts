@@ -34,6 +34,14 @@ async function pickTargetFolder(clickedUri?: vscode.Uri): Promise<vscode.Uri | u
     return clickedUri;
   }
 
+  // Invoked from inside a code file (editor context menu / command palette while
+  // editing) rather than a right-click on an Explorer folder: use that file's own
+  // folder as the target instead of making the user browse for one.
+  const activeDocumentUri = vscode.window.activeTextEditor?.document.uri;
+  if (activeDocumentUri && activeDocumentUri.scheme === 'file') {
+    return vscode.Uri.joinPath(activeDocumentUri, '..');
+  }
+
   const workspaceFolders = vscode.workspace.workspaceFolders;
   const defaultUri = workspaceFolders?.[0]?.uri;
 

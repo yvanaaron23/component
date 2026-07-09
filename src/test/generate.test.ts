@@ -316,6 +316,32 @@ suite('component.generate integration', () => {
     assert.match(barrelContent, /export \{ default as NewOne \} from '\.\/NewOne\/NewOne';/);
   });
 
+  test('uses the active editor\'s folder as the target when invoked without a clicked folder', async () => {
+    const projectDir = makeProject(tmpRoot, 'active-editor-project', { react: '^18.0.0' });
+    const subDir = path.join(projectDir, 'src', 'components');
+    fs.mkdirSync(subDir, { recursive: true });
+    const openFilePath = path.join(subDir, 'Notes.txt');
+    fs.writeFileSync(openFilePath, 'just some file being edited\n');
+
+    const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(openFilePath));
+    await vscode.window.showTextDocument(doc);
+
+    // Deliberately no showOpenDialog stub: if the command fell back to the dialog
+    // instead of using the active editor's folder, showOpenDialog would be called
+    // and (being unstubbed here) would hang/fail rather than silently succeed.
+    await withStub(vscode.window, 'showQuickPick', stackAndTypeStub('react', 'blank'), async () => {
+      await withStub(vscode.window, 'showInputBox', async () => 'sidebar', async () => {
+        await vscode.commands.executeCommand('component.generate');
+      });
+    });
+
+    const componentDir = path.join(subDir, 'Sidebar');
+    assert.ok(
+      fs.existsSync(path.join(componentDir, 'index.tsx')),
+      'component should have been generated next to the active file, in src/components',
+    );
+  });
+
   test('generates from an editor selection with inferred props', async () => {
     const projectDir = makeProject(tmpRoot, 'selection-project', { react: '^18.0.0' });
     const targetUri = vscode.Uri.file(projectDir);

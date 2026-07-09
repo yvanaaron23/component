@@ -55,9 +55,13 @@
       ],
       "editor/context": [
         {
+          "command": "component.generate",
+          "group": "navigation@1"
+        },
+        {
           "command": "component.generateFromSelection",
           "when": "editorHasSelection",
-          "group": "navigation@1"
+          "group": "navigation@2"
         }
       ]
     },

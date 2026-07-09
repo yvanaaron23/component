@@ -15,3 +15,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 - Generate a component from a code/JSON selection, inferring props
 - Standalone CLI (`npx generate-component`) reusing the same generation core
 - Custom fields for Form/List via an interactive field table (VS Code) or `--fields=name:kind,...` (CLI), falling back to the previous single-email/`string[]` defaults when none are added
+- Generate Component is now also available from the editor context menu (not just the Explorer), using the active file's folder as the target
